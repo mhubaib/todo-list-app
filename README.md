@@ -83,6 +83,6 @@ npm run ios
 
 ## Contact
 
-- My Name - [https://www.linkedin.com/in/muhammad-hubaib-76b26b370/](https://www.linkedin.com/in/muhammad-hubaib-76b26b370/) - mhubaib500@gmail.com
-- Project Link: [https://github.com/mhubaib/todo-list-app/tree/master](<https://github.com/mhubaib/todo-list-app/tree/master>)
-- My Portfolio - [https://muhammad-hubaib.vercel.app](<https://muhammad-hubaib.vercel.app>)
+- My Name - [Muhammad Hubaib](https://www.linkedin.com/in/muhammad-hubaib-76b26b370/) - mhubaib500@gmail.com
+- Project Link: [todo-list-app](<https://github.com/mhubaib/todo-list-app/tree/master>)
+- My Portfolio - [muhammad-hubaib.vercel.app](<https://muhammad-hubaib.vercel.app>)
