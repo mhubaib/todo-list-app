@@ -89,7 +89,7 @@ const CreateTaskScreen = ({ navigation, route }) => {
             if (isEditing) {
                 // Edit task
                 if (isOnline) {
-                    const taskRef = doc(db, 'tugas', taskId);
+                    const taskRef = doc(db, 'tasks', taskId);
                     await updateDoc(taskRef, {
                         title: title.trim(),
                         category: category,
@@ -100,17 +100,17 @@ const CreateTaskScreen = ({ navigation, route }) => {
                     Alert.alert('Sukses', 'Tugas berhasil diperbarui');
                 } else {
                     // Offline: Update locally
-                    const storedTasks = await AsyncStorage.getItem('tasks');
+                    const storedTasks = await AsyncStorage.getItem('@tasks_key');
                     let tasks = storedTasks ? JSON.parse(storedTasks) : [];
                     tasks = tasks.map(task =>
                         task.id === taskId
                             ? { ...task, title: title.trim(), category, dueDate: dateObj, dueTime: timeStr }
                             : task
                     );
-                    await AsyncStorage.setItem('tasks', JSON.stringify(tasks));
+                    await AsyncStorage.setItem('@tasks_key', JSON.stringify(tasks));
 
                     // Add to pendingTasks
-                    const storedPending = await AsyncStorage.getItem('pendingTasks');
+                    const storedPending = await AsyncStorage.getItem('@pendingtasks_key');
                     let pendingTasks = storedPending ? JSON.parse(storedPending) : [];
                     pendingTasks.push({
                         action: 'update',
@@ -122,7 +122,7 @@ const CreateTaskScreen = ({ navigation, route }) => {
                             dueTime: timeStr || null,
                         }
                     });
-                    await AsyncStorage.setItem('pendingTasks', JSON.stringify(pendingTasks));
+                    await AsyncStorage.setItem('@pendingtasks_key', JSON.stringify(pendingTasks));
 
                     Alert.alert('Sukses', 'Tugas diperbarui (akan disinkronkan saat online)');
                 }
@@ -140,7 +140,7 @@ const CreateTaskScreen = ({ navigation, route }) => {
                 };
 
                 if (isOnline) {
-                    await addDoc(collection(db, 'tugas'), {
+                    await addDoc(collection(db, 'tasks'), {
                         title: newTask.title,
                         category: newTask.category,
                         dueDate: newTask.dueDate,
@@ -152,13 +152,13 @@ const CreateTaskScreen = ({ navigation, route }) => {
                     Alert.alert('Sukses', 'Tugas berhasil dibuat');
                 } else {
                     // Offline: Save to AsyncStorage
-                    const storedTasks = await AsyncStorage.getItem('tasks');
+                    const storedTasks = await AsyncStorage.getItem('@tasks_key');
                     const tasks = storedTasks ? JSON.parse(storedTasks) : [];
                     tasks.push(newTask);
-                    await AsyncStorage.setItem('tasks', JSON.stringify(tasks));
+                    await AsyncStorage.setItem('@tasks_key', JSON.stringify(tasks));
 
                     // Add to pendingTasks
-                    const storedPending = await AsyncStorage.getItem('pendingTasks');
+                    const storedPending = await AsyncStorage.getItem('@pendingtasks_key');
                     let pendingTasks = storedPending ? JSON.parse(storedPending) : [];
                     pendingTasks.push({
                         action: 'create',
@@ -172,7 +172,7 @@ const CreateTaskScreen = ({ navigation, route }) => {
                             createdAt: newTask.createdAt,
                         }
                     });
-                    await AsyncStorage.setItem('pendingTasks', JSON.stringify(pendingTasks));
+                    await AsyncStorage.setItem('@pendingtasks_key', JSON.stringify(pendingTasks));
 
                     Alert.alert('Sukses', 'Tugas dibuat (akan disinkronkan saat online)');
                 }

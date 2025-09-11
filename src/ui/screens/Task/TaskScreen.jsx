@@ -32,7 +32,7 @@ const TaskScreen = ({ navigation }) => {
     useEffect(() => {
         const initSkeletonCount = async () => {
             try {
-                const storedTasks = await AsyncStorage.getItem('tasks');
+                const storedTasks = await AsyncStorage.getItem('@tasks_key');
                 if (storedTasks) {
                     const parsedTasks = JSON.parse(storedTasks);
                     const notDoneCount = parsedTasks.filter(task => !task.done).length || 4;
@@ -48,40 +48,58 @@ const TaskScreen = ({ navigation }) => {
 
     // Network connectivity monitoring
     useEffect(() => {
-        const unsubscribe = NetInfo.addEventListener(state => setIsOnline(state.isConnected));
-        return unsubscribe;
-    }, []);
+        const unsubscribe = NetInfo.addEventListener(state => {
+            const wasOnline = isOnline;
+            const isConnected = state.isConnected && state.isInternetReachable;
+            setIsOnline(isConnected);
 
-    // Load tasks and pending tasks from storage when offline
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const storedTasks = await AsyncStorage.getItem('tasks');
-                if (storedTasks) {
-                    const parsedTasks = JSON.parse(storedTasks);
-                    setTasks(parsedTasks);
-                    const notDoneCount = parsedTasks.filter(task => !task.done).length ?? 2;
-                    const doneCount = parsedTasks.filter(task => task.done).length ?? 2;
-                    setSkeletonCount({ notDone: notDoneCount, done: doneCount });
-                }
-                const storedPending = await AsyncStorage.getItem('pendingTasks');
-                if (storedPending) setPendingTasks(JSON.parse(storedPending));
-            } catch (error) {
-                console.error('Error loading data from storage:', error);
-            } finally {
-                if (!isOnline) setIsLoading(false);
+            // Jika baru saja online, load ulang data
+            if (!wasOnline && isConnected) {
+                loadOfflineData();
             }
-        };
-        if (!isOnline) loadData();
+        });
+
+        return unsubscribe;
     }, [isOnline]);
 
-    const saveTasksToStorage = async (tasksToSave) => {
+    // Load tasks and pending tasks from storage when offline
+    async function loadOfflineData() {
         try {
-            await AsyncStorage.setItem('tasks', JSON.stringify(tasksToSave));
+            setIsLoading(true);
+
+            // Gunakan key yang konsisten
+            const storedTasks = await AsyncStorage.getItem('@tasks_key');
+            console.log('Loading stored tasks:', storedTasks);
+
+            if (storedTasks) {
+                const parsedTasks = JSON.parse(storedTasks);
+
+                // Validasi data
+                if (Array.isArray(parsedTasks)) {
+                    setTasks(parsedTasks);
+
+                    // Update skeleton counts
+                    const notDoneCount = parsedTasks.filter(task => !task.done).length || 2;
+                    const doneCount = parsedTasks.filter(task => task.done).length || 2;
+                    setSkeletonCount({ notDone: notDoneCount, done: doneCount });
+                }
+            }
+
+            // Load pending tasks
+            const storedPending = await AsyncStorage.getItem('@pendingtasks_key');
+            if (storedPending) {
+                setPendingTasks(JSON.parse(storedPending));
+            }
         } catch (error) {
-            console.error('Error saving tasks to storage:', error);
+            console.error('Error loading offline data:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        loadOfflineData();
+    }, []); // Load once on component mount
 
     // Sync pending tasks when online
     const syncPendingTasks = useCallback(async () => {
@@ -90,15 +108,15 @@ const TaskScreen = ({ navigation }) => {
         try {
             for (const task of pendingTasks) {
                 if (task.action === 'create') {
-                    await addDoc(collection(db, 'tugas'), task.data);
+                    await addDoc(collection(db, 'tasks'), task.data);
                 } else if (task.action === 'update') {
-                    await updateDoc(doc(db, 'tugas', task.id), task.data);
+                    await updateDoc(doc(db, 'tasks', task.id), task.data);
                 } else if (task.action === 'delete') {
-                    await deleteDoc(doc(db, 'tugas', task.id));
+                    await deleteDoc(doc(db, 'tasks', task.id));
                 }
             }
             setPendingTasks([]);
-            await AsyncStorage.removeItem('pendingTasks');
+            await AsyncStorage.removeItem('@pendingtasks_key');
         } catch (error) {
             console.error('Error syncing pending tasks:', error);
         }
@@ -108,23 +126,68 @@ const TaskScreen = ({ navigation }) => {
         if (isOnline) syncPendingTasks();
     }, [isOnline, syncPendingTasks]);
 
-    // Fetch tasks from Firestore
+    // Firestore real-time listener
     useEffect(() => {
-        const q = query(collection(db, 'tugas'), where('userId', '==', auth.currentUser.uid), orderBy('createdAt', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const taskList = snapshot.docs.map(dok => ({ id: dok.id, ...dok.data() }));
-            setTasks(taskList);
-            const notDoneCount = taskList.filter(task => !task.done).length ?? 2;
-            const doneCount = taskList.length - notDoneCount ?? 2;
-            setSkeletonCount({ notDone: notDoneCount, done: doneCount });
-            if (isOnline) saveTasksToStorage(taskList);
-            setIsLoading(false);
-        }, (error) => {
-            console.error('Error fetching tasks:', error);
-            setIsLoading(false);
+        if (!isOnline) return;
+
+        const q = query(
+            collection(db, 'tasks'),
+            where('userId', '==', auth.currentUser.uid),
+            orderBy('createdAt', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            try {
+                const taskList = snapshot.docs.map(dok => ({
+                    id: dok.id,
+                    ...dok.data(),
+                    // Tambah timestamp untuk tracking
+                    lastSync: new Date().toISOString()
+                }));
+
+                // Save ke AsyncStorage dulu
+                await saveTasksToStorage(taskList);
+
+                // Update state setelah berhasil save
+                setTasks(taskList);
+
+                const notDoneCount = taskList.filter(task => !task.done).length || 2;
+                const doneCount = taskList.filter(task => task.done).length || 2;
+                setSkeletonCount({ notDone: notDoneCount, done: doneCount });
+            } catch (error) {
+                console.error('Error in Firestore listener:', error);
+            } finally {
+                setIsLoading(false);
+            }
         });
+
         return unsubscribe;
     }, [isOnline]);
+
+    // Modified saveTasksToStorage function
+    async function saveTasksToStorage(tasksToSave) {
+        try {
+            if (!Array.isArray(tasksToSave)) {
+                console.error('Invalid tasks data:', tasksToSave);
+                return;
+            }
+
+            // Add unique identifier untuk mencegah duplikasi
+            const tasksWithIds = tasksToSave.map(task => ({
+                ...task,
+                localId: task.id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            }));
+
+            await AsyncStorage.setItem('@tasks_key', JSON.stringify(tasksWithIds));
+
+            // Update UI immediately
+            setTasks(tasksWithIds);
+
+            console.log('Tasks saved successfully:', tasksWithIds);
+        } catch (error) {
+            console.error('Error saving tasks to storage:', error);
+        }
+    };
 
     // Prepare sectioned data for FlatList
     const getSectionedData = useCallback(() => {
@@ -158,7 +221,7 @@ const TaskScreen = ({ navigation }) => {
 
     const today = new Date();
 
-    const visibleSections = sections.map(s => ({...s, data: s.data.filter(t => t.dueDate && isSameDay(t.dueDate, today)) })).filter(s => s.data.length > 0);
+    const visibleSections = sections.map(s => ({ ...s, data: s.data.filter(t => t.dueDate && isSameDay(t.dueDate, today)) })).filter(s => s.data.length > 0);
 
     return (
         <SafeAreaProvider>
@@ -209,7 +272,7 @@ const TaskScreen = ({ navigation }) => {
                                             {item.data.map(task => <TaskItem key={task.id} task={task} toggleTask={toggleTask} deleteTask={deleteTask} navigation={navigation} />)}
                                         </View>
                                     )}
-                                    ListEmptyComponent={<EmptyTasks onPress={() => navigation.navigate('CreateTaskScreen')} ctaText='Buat Tugas Baru' ctaVisible={true}/>}
+                                    ListEmptyComponent={<EmptyTasks onPress={() => navigation.navigate('CreateTaskScreen')} ctaText='Buat Tugas Baru' ctaVisible={true} />}
                                 />
                             )}
                             <TouchableOpacity

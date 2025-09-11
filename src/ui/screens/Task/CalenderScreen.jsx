@@ -32,7 +32,7 @@ const CalenderScreen = ({ navigation }) => {
         if (!isOnline) {
             (async () => {
                 try {
-                    const storedTasks = await AsyncStorage.getItem('tasks');
+                    const storedTasks = await AsyncStorage.getItem('@tasks_key');
                     if (storedTasks) {
                         setTugas(JSON.parse(storedTasks));
                     }
@@ -47,7 +47,7 @@ const CalenderScreen = ({ navigation }) => {
     useEffect(() => {
         if (!auth?.currentUser?.uid) { return; }
         const q = query(
-            collection(db, 'tugas'),
+            collection(db, 'tasks'),
             where('userId', '==', auth.currentUser.uid),
             orderBy('createdAt', 'desc')
         );
@@ -55,7 +55,7 @@ const CalenderScreen = ({ navigation }) => {
             const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setTugas(list);
             if (isOnline) {
-                AsyncStorage.setItem('tasks', JSON.stringify(list)).catch(() => { });
+                AsyncStorage.setItem('@tasks_key', JSON.stringify(list)).catch(() => { });
             }
         });
         return unsub;
@@ -63,7 +63,7 @@ const CalenderScreen = ({ navigation }) => {
 
     const toggleTask = useCallback(async (taskId, currentStatus) => {
         try {
-            const taskRef = doc(db, 'tugas', taskId);
+            const taskRef = doc(db, 'tasks', taskId);
             await updateDoc(taskRef, { done: !currentStatus });
         } catch (e) {
             Alert.alert('Error', 'Gagal memperbarui status tugas');
@@ -81,7 +81,7 @@ const CalenderScreen = ({ navigation }) => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await deleteDoc(doc(db, 'tugas', taskId));
+                            await deleteDoc(doc(db, 'tasks', taskId));
                         } catch (e) {
                             Alert.alert('Error', 'Gagal menghapus tugas');
                         }

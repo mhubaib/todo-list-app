@@ -7,7 +7,7 @@ const TaskItem = ({ task, toggleTask, deleteTask }) => {
 
     const handleEditTask = () => {
         // Navigate to Tasks tab first, then to CreateTaskScreen
-        navigate('Task', {
+        navigate('Tasks', {
             screen: 'Tasks',
             params: {
                 screen: 'CreateTaskScreen',

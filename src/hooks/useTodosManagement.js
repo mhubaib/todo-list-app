@@ -8,7 +8,7 @@ export function useTodosManagement({ setTasks, saveTasksToStorage, setPendingTas
     const toggleTask = async (taskId, currentStatus) => {
         try {
             if (isOnline) {
-                await updateDoc(doc(db, 'tugas', taskId), { done: !currentStatus });
+                await updateDoc(doc(db, 'tasks', taskId), { done: !currentStatus });
             } else {
                 const updatedTasks = tasks.map(task =>
                     task.id === taskId ? { ...task, done: !currentStatus } : task
@@ -17,7 +17,7 @@ export function useTodosManagement({ setTasks, saveTasksToStorage, setPendingTas
                 saveTasksToStorage(updatedTasks);
                 const pendingTask = { action: 'update', id: taskId, data: { done: !currentStatus } };
                 setPendingTasks(prev => [...prev, pendingTask]);
-                await AsyncStorage.setItem('pendingTasks', JSON.stringify([...pendingTasks, pendingTask]));
+                await AsyncStorage.setItem('@pendingtasks_key', JSON.stringify([...pendingTasks, pendingTask]));
             }
         } catch (error) {
             console.error('Error updating task:', error);
@@ -36,14 +36,14 @@ export function useTodosManagement({ setTasks, saveTasksToStorage, setPendingTas
                     onPress: async () => {
                         try {
                             if (isOnline) {
-                                await deleteDoc(doc(db, 'tugas', taskId));
+                                await deleteDoc(doc(db, 'tasks', taskId));
                             } else {
                                 const updatedTasks = tasks.filter(task => task.id !== taskId);
                                 setTasks(updatedTasks);
                                 saveTasksToStorage(updatedTasks);
                                 const pendingTask = { action: 'delete', id: taskId };
                                 setPendingTasks(prev => [...prev, pendingTask]);
-                                await AsyncStorage.setItem('pendingTasks', JSON.stringify([...pendingTasks, pendingTask]));
+                                await AsyncStorage.setItem('@pendingtasks_key', JSON.stringify([...pendingTasks, pendingTask]));
                             }
                         } catch (error) {
                             console.error('Error deleting task:', error);

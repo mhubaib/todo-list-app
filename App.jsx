@@ -10,6 +10,7 @@ import { auth } from './firebase.config';
 import RNBootSplash from 'react-native-bootsplash';
 import AnimatedSplash from './src/ui/screens/AnimatedSplash';
 import { navigationRef } from './src/utils/navigationRef';
+import { showAsyncStorage } from './src/utils/showAsyncStorage';
 
 enableScreens();
 
@@ -25,6 +26,7 @@ const App = () => {
       setUsr(user);
       setInitializing(false);
     });
+    showAsyncStorage();
     return unsubscribe;
   }, []);
 
