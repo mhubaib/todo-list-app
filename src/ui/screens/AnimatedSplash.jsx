@@ -1,15 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Animated, Dimensions, StyleSheet } from 'react-native';
+import { View, Animated, Dimensions, StyleSheet } from 'react-native';
 
 const { height } = Dimensions.get('window');
 
 export default function AnimatedSplash({
     onFinish,
-    appName = 'dailyApp',
+    appName = 'DailyApp',
     backgroundColor = '#0A84FF', // ganti dengan warna tema aplikasi Anda
     logoSource = require('../../assets/todo-app-icon.png'),
-    duration = 1200, // durasi animasi logo masuk
-    stay = 1000,      // jeda sebelum fade-out
+    duration = 1500, // durasi animasi logo masuk
+    stay = 1500,      // jeda sebelum fade-out
     fadeOut = 500,   // durasi animasi keluar
 }) {
     const scale = useRef(new Animated.Value(0.8)).current;

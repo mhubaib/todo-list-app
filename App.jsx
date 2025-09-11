@@ -28,6 +28,8 @@ const App = () => {
     return unsubscribe;
   }, []);
 
+  if (initializing) return null;
+
   return (
     <>
       <NavigationContainer
@@ -36,11 +38,29 @@ const App = () => {
           RNBootSplash.hide({ fade: true });
         }}
       >
-        <Stack.Navigator initialRouteName={usr ? 'Task' : 'Login'}>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, animation: 'fade', animationDuration: 500 }} />
-          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false, animation: 'fade', animationDuration: 500 }} />
-          <Stack.Screen name="Task" component={MainTabNavigator} options={{ headerShown: false, animation: 'fade', animationDuration: 500 }} />
-          <Stack.Screen name="MainTabNavigator" component={MainTabNavigator} />
+        <Stack.Navigator>
+          {usr ? (
+            // Auth stack
+            <Stack.Screen
+              name="Task"
+              component={MainTabNavigator}
+              options={{ headerShown: false, animation: 'fade', animationDuration: 500 }}
+            />
+          ) : (
+            // Non-auth stack
+            <>
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
+                options={{ headerShown: false, animation: 'fade', animationDuration: 500 }}
+              />
+              <Stack.Screen
+                name="Register"
+                component={RegisterScreen}
+                options={{ headerShown: false, animation: 'fade', animationDuration: 500 }}
+              />
+            </>
+          )}
         </Stack.Navigator>
       </NavigationContainer>
 

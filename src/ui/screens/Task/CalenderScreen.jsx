@@ -12,6 +12,7 @@ import TaskItem from '../../components/TaskItem';
 import { useStatusBarManager } from '../../../hooks/useStatusBarManager';
 import { useTodosUtility } from '../../../hooks/useTodosUtility';
 import EmptyTasks from '../../components/EmptyTask';
+import { navigate } from '../../../utils/navigationRef';
 
 const CalenderScreen = ({ navigation }) => {
     const [tugas, setTugas] = useState([]);
@@ -184,7 +185,7 @@ const CalenderScreen = ({ navigation }) => {
                                 renderItem={({ item: task }) => (
                                     <TaskItem key={task.id} task={task} toggleTask={toggleTask} deleteTask={deleteTask} navigation={navigation}/>
                                 )}
-                                ListEmptyComponent={<EmptyTasks />}
+                                ListEmptyComponent={<EmptyTasks title='Belum ada tugas di tanggal ini' subtitle='Tambahkan tugas pertamamu agar harinya lebih produktif.' ctaText='Buat Tugas' ctaVisible={true} onPress={handleCreateTask}/>}
                             />
                         </View>
                     </View>
@@ -193,6 +194,10 @@ const CalenderScreen = ({ navigation }) => {
         </SafeAreaProvider>
     );
 };
+
+function handleCreateTask() {
+    navigate('Tasks', { screen: 'CreateTaskScreen' });
+}
 
 function toDateKey(dueDate) {
     if (!dueDate) return null;
