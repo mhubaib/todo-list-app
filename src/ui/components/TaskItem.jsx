@@ -6,8 +6,7 @@ const TaskItem = ({ task, toggleTask, deleteTask }) => {
     const { formatDueDate, getCategoryColor, isOverdue } = useTodosUtility();
 
     const handleEditTask = () => {
-        // Navigate to Tasks tab first, then to CreateTaskScreen
-        navigate('Tasks', {
+        navigate('Task', {
             screen: 'Tasks',
             params: {
                 screen: 'CreateTaskScreen',
