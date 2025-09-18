@@ -2,7 +2,7 @@ import {
     View,
     Text,
     StyleSheet,
-    Dimensions,
+    // Dimensions,
     TouchableWithoutFeedback,
     Keyboard,
     SafeAreaView,
@@ -10,7 +10,7 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-const { width, height } = Dimensions.get("window");
+// const { width, height } = Dimensions.get("window");
 
 const AuthContainer = ({ title, text, children, onPress, screen }) => {
     const dismissKeyboard = onPress || (() => Keyboard.dismiss());
